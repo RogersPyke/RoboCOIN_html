@@ -181,6 +181,20 @@ def consolidate_metadata(input_dir: str, output_file: str, compress: bool = True
     print("=" * 80)
 
 
+def find_project_root():
+    """Find the project root directory."""
+    # Start from current script location
+    current = Path(__file__).resolve().parent
+    
+    # Go up until we find the project root (look for docs/ directory)
+    for parent in [current] + list(current.parents):
+        if (parent / "docs").exists():
+            return parent
+    
+    # If not found, assume current directory is project root
+    return Path.cwd()
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -189,14 +203,14 @@ def main():
     parser.add_argument(
         "--input-dir",
         type=str,
-        default="docs/assets/dataset_info",
-        help="Directory containing YAML files (default: docs/assets/dataset_info)"
+        default=None,
+        help="Directory containing YAML files (default: {project_root}/docs/assets/dataset_info)"
     )
     parser.add_argument(
         "--output",
         type=str,
-        default="docs/assets/dataset_info/consolidated_datasets.json",
-        help="Output JSON file path (default: docs/assets/dataset_info/consolidated_datasets.json)"
+        default=None,
+        help="Output JSON file path (default: {project_root}/docs/assets/dataset_info/consolidated_datasets.json)"
     )
     parser.add_argument(
         "--no-compress",
@@ -206,9 +220,16 @@ def main():
     
     args = parser.parse_args()
     
+    # Find project root
+    project_root = find_project_root()
+    
+    # Set defaults relative to project root
+    input_dir = args.input_dir if args.input_dir else str(project_root / "docs" / "assets" / "dataset_info")
+    output_file = args.output if args.output else str(project_root / "docs" / "assets" / "dataset_info" / "consolidated_datasets.json")
+    
     consolidate_metadata(
-        input_dir=args.input_dir,
-        output_file=args.output,
+        input_dir=input_dir,
+        output_file=output_file,
         compress=not args.no_compress
     )
 

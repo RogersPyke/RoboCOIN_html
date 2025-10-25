@@ -260,6 +260,20 @@ def generate_all_thumbnails(
     print("=" * 80)
 
 
+def find_project_root():
+    """Find the project root directory."""
+    # Start from current script location
+    current = Path(__file__).resolve().parent
+    
+    # Go up until we find the project root (look for docs/ directory)
+    for parent in [current] + list(current.parents):
+        if (parent / "docs").exists():
+            return parent
+    
+    # If not found, assume current directory is project root
+    return Path.cwd()
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -268,14 +282,14 @@ def main():
     parser.add_argument(
         "--videos-dir",
         type=str,
-        default="docs/assets/videos",
-        help="Directory containing video files (default: docs/assets/videos)"
+        default=None,
+        help="Directory containing video files (default: {project_root}/docs/assets/videos)"
     )
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="docs/assets/thumbnails",
-        help="Directory to save thumbnails (default: docs/assets/thumbnails)"
+        default=None,
+        help="Directory to save thumbnails (default: {project_root}/docs/assets/thumbnails)"
     )
     parser.add_argument(
         "--width",
@@ -305,9 +319,16 @@ def main():
     
     args = parser.parse_args()
     
+    # Find project root
+    project_root = find_project_root()
+    
+    # Set defaults relative to project root
+    videos_dir = args.videos_dir if args.videos_dir else str(project_root / "docs" / "assets" / "videos")
+    output_dir = args.output_dir if args.output_dir else str(project_root / "docs" / "assets" / "thumbnails")
+    
     generate_all_thumbnails(
-        videos_dir=args.videos_dir,
-        output_dir=args.output_dir,
+        videos_dir=videos_dir,
+        output_dir=output_dir,
         width=args.width,
         quality=args.quality,
         timestamp=args.timestamp,

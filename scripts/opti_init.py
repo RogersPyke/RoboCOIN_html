@@ -257,6 +257,20 @@ def verify_optimizations(docs_dir):
     return all_good
 
 
+def find_project_root():
+    """Find the project root directory."""
+    # Start from current script location
+    current = Path(__file__).resolve().parent
+    
+    # Go up until we find the project root (look for docs/ directory)
+    for parent in [current] + list(current.parents):
+        if (parent / "docs").exists():
+            return parent
+    
+    # If not found, assume current directory is project root
+    return Path.cwd()
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -280,14 +294,18 @@ def main():
     parser.add_argument(
         '--project-root',
         type=str,
-        default='.',
-        help='Path to project root (default: current directory)'
+        default=None,
+        help='Path to project root (default: auto-detect)'
     )
     
     args = parser.parse_args()
     
     # Determine project root
-    project_root = Path(args.project_root).resolve()
+    if args.project_root:
+        project_root = Path(args.project_root).resolve()
+    else:
+        project_root = find_project_root()
+    
     docs_dir = project_root / "docs"
     
     # Print header
